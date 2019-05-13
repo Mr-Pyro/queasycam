@@ -53,34 +53,19 @@ public class QueasyCam {
 	private PVector up;
 	private PVector right;
 	private PVector forward;
-    private PVector target;
+  private PVector target;
 	private Point mouse;
 	private Point prevMouse;
 	private HashMap<Character, Boolean> keys;
 
-	public QueasyCam(PApplet applet){
-		this.applet = applet;
-		applet.registerMethod("draw", this);
-		applet.registerMethod("keyEvent", this);
+	private int h;
+	private int w;
+
+	public QueasyCam(PApplet applet)
+	{
 		
-		try {
-			robot = new Robot();
-		} catch (Exception e){}
+		this(applet, 0.01f, 1000f);
 
-		controllable = true;
-		speed = 3f;
-		sensitivity = 2f;
-		position = new PVector(0f, 0f, 0f);
-		up = new PVector(0f, 1f, 0f);
-		right = new PVector(1f, 0f, 0f);
-		forward = new PVector(0f, 0f, 1f);
-		velocity = new PVector(0f, 0f, 0f);
-		pan = 0f;
-		tilt = 0f;
-		friction = 0.75f;
-		keys = new HashMap<Character, Boolean>();
-
-		applet.perspective(PConstants.PI/3f, (float)applet.width/(float)applet.height, 0.01f, 1000f);
 	}
     
     public QueasyCam(PApplet applet, float near, float far){
@@ -104,6 +89,9 @@ public class QueasyCam {
         tilt = 0f;
         friction = 0.75f;
         keys = new HashMap<Character, Boolean>();
+
+				w = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().width;
+				h = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().height;
         
         applet.perspective(PConstants.PI/3f, (float)applet.width/(float)applet.height, near, far);
     }
@@ -113,9 +101,6 @@ public class QueasyCam {
 		
 		mouse = MouseInfo.getPointerInfo().getLocation();
 		if (prevMouse == null) prevMouse = new Point(mouse.x, mouse.y);
-		
-		int w = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().width;
-		int h = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().height;
 		
 		if (mouse.x < 1 && (mouse.x - prevMouse.x) < 0){
 			robot.mouseMove(w-2, mouse.y);
@@ -181,20 +166,28 @@ public class QueasyCam {
 		}
 	}
     
-    public void beginHUD()
-    {
-        g.pushMatrix();
-        g.hint(DISABLE_DEPTH_TEST);
-        g.resetMatrix();
-        g.applyMatrix(originalMatrix);
-    }
-    
-    public void endHUD()
-    {
-        g.hint(ENABLE_DEPTH_TEST);
-        g.popMatrix();
-    }
-	
+	interface HUDScript
+	{
+
+		void draw();
+
+	}
+
+	public void drawHUD(HUDScript hud)
+	{
+
+		g.pushMatrix();
+		g.hint(DISABLE_DEPTH_TEST);
+		g.resetMatrix();
+		g.applyMatrix(originalMatrix);
+
+		hud.draw();
+
+		g.hint(ENABLE_DEPTH_TEST);
+    g.popMatrix();
+
+	}
+
 	private float clamp(float x, float min, float max){
 		if (x > max) return max;
 		if (x < min) return min;
